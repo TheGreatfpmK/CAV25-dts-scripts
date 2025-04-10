@@ -87,3 +87,5 @@ def main(models_dir, generate_csv):
         for result in results:
             print(result)
 
+if __name__ == '__main__':
+    main()

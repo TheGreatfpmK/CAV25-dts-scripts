@@ -59,3 +59,7 @@ def main(log_dir):
     for x in result_dirs:
         working_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), x)
         add_best_runtime_column(working_directory)
+
+
+if __name__ == '__main__':
+    main()
