@@ -1,0 +1,52 @@
+#!/bin/bash
+
+overwrite=false
+provided_logs=false
+thread_count=2 # Ideally you should have 16GB of RAM per thread
+
+while getopts o flag
+do
+    case "${flag}" in
+        o)
+            overwrite=true
+            ;;
+        p)
+            provided_logs=true
+            ;;
+    esac
+done
+
+if [ "$provided_logs" = true ]; 
+then
+    echo "Using provided log files..."
+    exit 0
+fi
+
+if [ "$overwrite" = true ]; 
+then
+    echo "Overwriting existing log files..."
+
+    echo "generating dtPAYNT log files"
+    python3 experiments-dts-cav.py --paynt-dir ./ --models-dir ./models --experiment-name cav-final --generate-csv --workers $thread_count --restart
+
+    echo "generating OMDT log files"
+    cd OMDT
+    python3 experiments-dts-cav-omdt.py --omdt-dir ./ --models-dir ./models --experiment-name cav-final --workers $thread_count --restart
+else
+    echo "generating dtPAYNT log files"
+    python3 experiments-dts-cav.py --paynt-dir ./ --models-dir ./models --experiment-name cav-final --generate-csv --workers $thread_count
+
+    echo "generating OMDT log files"
+    cd OMDT
+    python3 experiments-dts-cav-omdt.py --omdt-dir ./ --models-dir ./models --experiment-name cav-final --workers $thread_count
+    cd -
+
+    echo "generating dtControl results"
+    python3 generate-dtcontrol-results.py --models-dir ./models --generate-csv
+fi
+
+
+echo "creating csv file with results for OMDT"
+python3 best-time-omdt-parser.py --log-dir ./OMDT/logs/cav-final
+
+echo "generating tables and figures"
