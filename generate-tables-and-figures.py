@@ -710,6 +710,80 @@ def plot_figure_4(file_path, generate_pgf):
     else:
         fig.savefig('generated-results/figure-4.pdf', bbox_inches='tight')
 
+def generate_model_info_table(file_path):
+    with open(file_path, mode='r') as file:
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(file_path)
+
+        # Define the order of columns for the LaTeX table
+        column_order = ["model", "vars", "S", "Act", "choices"]
+
+        rename_dict = {
+            "maze-7": "maze-7",
+            "maze-steps": "maze-steps",
+            "3d_navigation": "3d",
+            "blackjack": "blackjack",
+            "frozenlake_4x4": "lake-4",
+            "frozenlake_8x8": "lake-8",
+            "frozenlake_12x12": "lake-12",
+            "inventory_management": "inventory",
+            "system_administrator_1": "sys-1",
+            "system_administrator_2": "sys-2",
+            "system_administrator_tree": "sys-tree",
+            "tictactoe_vs_random": "tictactoe",
+            "traffic_intersection": "traffic",
+            "consensus-3-32": "consensus",
+            "csma-2-4": "csma",
+            "firewire-3": "firewire",
+            "ij-10": "ij",
+            "pacman": "pacman",
+            "philosophers-4": "philos",
+            "pnueli-zuck-3": "pnueli",
+            "rabin-4": "rabin",
+            "resource-gathering-5": "resource",
+            "wlan-1-2": "wlan",
+            "wlan-2-cost": "wlan"
+        }
+
+        # Remove duplicates based on the 'model' column
+        df = df.drop_duplicates(subset=['model'])
+
+        # Rename models according to the rename_dict
+        df['model'] = df['model'].str.replace('^omdt-|^qcomp-', '', regex=True)
+        df['model'] = df['model'].apply(lambda x: rename_dict[x] if x in rename_dict else x)
+
+
+
+        # Open the file in write mode
+        with open("generated-results/model-info-table.tex", "w") as f:
+            # Start LaTeX table
+            f.write(r"\begin{tabular}{l rrrr@{\hskip 32pt}l rrrr}" + "\n")
+            f.write(r"\toprule" + "\n")
+            f.write(r"\multirow{1}{*}{model} & vars & $|S|$ & $|Act|$ & choices & \multirow{1}{*}{model} & vars & $|S|$ & $|Act|$ & choices \\" + "\n")
+            f.write(r"\midrule" + "\n")
+
+            # Iterate through rows in pairs
+            for i in range(0, len(df), 2):
+                row1 = df.iloc[i]
+                ordered_row1 = [
+                    f"{float(row1[col]):.2f}" if col == "*-opt" else str(row1[col]).replace('_', r'\_') if isinstance(row1[col], str) else row1[col]
+                    for col in column_order
+                ]
+                ordered_row1 = [str(x) for x in ordered_row1]
+                if i + 1 < len(df):
+                    row2 = df.iloc[i + 1]
+                    ordered_row2 = [
+                    f"{float(row2[col]):.2f}" if col == "*-opt" else str(row2[col]).replace('_', r'\_') if isinstance(row2[col], str) else row2[col]
+                    for col in column_order
+                    ]
+                    ordered_row2 = [str(x) for x in ordered_row2]
+                else:
+                    ordered_row2 = [""] * len(column_order)
+                f.write(" & ".join(ordered_row1) + " & " + " & ".join(ordered_row2) + r" \\" + "\n")
+            
+            # End LaTeX table
+            f.write(r"\bottomrule" + "\n")
+            f.write(r"\end{tabular}" + "\n")
 
 @click.command()
 @click.option('--file-path', type=str, default='final-merge.csv', help='Path to the CSV file.')
@@ -721,6 +795,8 @@ def main(file_path, generate_pgf, add_dtcontrol_depths):
     plot_figure_3(file_path, generate_pgf, add_dtcontrol_depths)
     plot_figure_4(file_path, generate_pgf)
     plot_figure_5(file_path, generate_pgf, add_dtcontrol_depths)
+
+    generate_model_info_table(file_path)
 
 if __name__ == '__main__':
     main()
