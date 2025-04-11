@@ -2,9 +2,10 @@
 
 overwrite=false
 provided_logs=false
+generate_only=false
 thread_count=2 # Ideally you should have 16GB of RAM per thread
 
-while getopts op flag
+while getopts opg flag
 do
     case "${flag}" in
         o)
@@ -12,6 +13,9 @@ do
             ;;
         p)
             provided_logs=true
+            ;;
+        g)
+            generate_only=true
             ;;
     esac
 done
@@ -21,6 +25,13 @@ then
     echo "Using provided log files..."
     python3 generate-tables-and-figures.py --file-path original-logs/final-merge.csv --add-dtcontrol-depths
     echo "Generated results using the original log files to 'generated-results'"
+    exit 0
+fi
+
+if [ "$generate_only" = true ]; 
+then
+    echo "Generating the results"
+    python3 generate-tables-and-figures.py
     exit 0
 fi
 
@@ -52,7 +63,7 @@ echo "creating csv file with results for OMDT"
 python3 best-time-omdt-parser.py --log-dir ./OMDT/logs/cav-final
 
 echo "merging csv files"
-python3 merge-csv.py --log-dir ./OMDT/logs/cav-final --output-dir ./OMDT/logs/cav-final/merged.csv
+python3 merge-csv-files.py
 
 echo "generating tables and figures"
 python3 generate-tables-and-figures.py
